@@ -1,0 +1,52 @@
+package com.buxbuddy.auth.controller;
+
+import com.buxbuddy.auth.dto.api.ApiResponseBuilder;
+import com.buxbuddy.auth.dto.api.ApiSuccessResponse;
+import com.buxbuddy.auth.dto.business.BusinessRequest;
+import com.buxbuddy.auth.dto.business.BusinessResponse;
+import com.buxbuddy.auth.service.BusinessService;
+import com.buxbuddy.util.ApiResponseUtil;
+import com.buxbuddy.util.MessageUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/business")
+@RequiredArgsConstructor
+public class BusinessController {
+
+    private final BusinessService businessService;
+    private final MessageUtil messageUtil;
+
+    @PostMapping
+    public ResponseEntity<ApiSuccessResponse<BusinessResponse>> create(
+            @RequestBody BusinessRequest request,
+            HttpServletRequest httpRequest) {
+        return ApiResponseUtil.success(
+                HttpStatus.CREATED,
+                messageUtil.getMessage("business.created"),
+                businessService.createBusiness(request),
+                httpRequest
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiSuccessResponse<BusinessResponse>> getById(
+            @PathVariable Long id,
+            HttpServletRequest httpRequest) {
+        BusinessResponse response = businessService.getBusinessById(id);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(
+                        ApiResponseBuilder.success(
+                                HttpStatus.OK.value(),
+                                messageUtil.getMessage("business.retrieved"),
+                                response,
+                                httpRequest
+                        )
+                );
+    }
+}
