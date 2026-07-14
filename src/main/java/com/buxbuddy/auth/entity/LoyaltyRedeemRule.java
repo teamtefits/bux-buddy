@@ -1,0 +1,46 @@
+package com.buxbuddy.auth.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "loyalty_redeem_rule")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class LoyaltyRedeemRule {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    // Customer needs these points
+    @Column(nullable = false)
+    private Integer pointsRequired;
+    // Discount value
+    @Column(nullable = false)
+    private Double discountValue;
+
+    /*
+       FIXED
+       PERCENT
+    */
+    @Column(nullable = false)
+    private String type;
+
+
+    @Builder.Default
+    private Boolean active = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="business_id", nullable=false)
+    private Business business;
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void onCreate(){
+        createdAt = LocalDateTime.now();
+    }
+}

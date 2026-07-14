@@ -13,11 +13,11 @@ import java.time.LocalDate;
         name = "product",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_product",
+                        name = "uk_product_business_brand_batch",
                         columnNames = {
+                                "business_id",
                                 "product_name",
                                 "brand",
-                                "item_code",
                                 "batch_number"
                         }
                 )

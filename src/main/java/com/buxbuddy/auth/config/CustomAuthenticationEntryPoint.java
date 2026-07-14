@@ -22,10 +22,11 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setContentType("application/json");
 
         response.getWriter().write("""
-        {
-            "success": false,
-            "message": "Invalid email or password"
-        }
-        """);
+    {
+        "success": false,
+        "status": 401,
+        "message": "Authentication required. Please provide a valid login token / Check Url."
+    }
+""");
     }
 }

@@ -19,41 +19,33 @@ public class Business {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(nullable = false)
-    private String name;
-
-    private String businessType;   // RETAIL, RESTAURANT, SERVICE, etc.
-
+    private String businessName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="category_id", nullable = false)
+    private BusinessCategory businessCategory;
     @Column(nullable = false)
-    private String email;
-
+    private String businessEmail;
     @Column(nullable = false)
-    private String phone;
-
-    private String address;
-
+    private String businessPhone;
+    private String businessAddress;
     @Builder.Default
     private String status = "ACTIVE";
-
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
     @OneToMany(
             mappedBy = "business",
             fetch = FetchType.LAZY
     )
     @Builder.Default
     private List<Customer> customers = new ArrayList<>();
+
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

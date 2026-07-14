@@ -63,11 +63,9 @@ public class JwtService {
                                 System.currentTimeMillis() + jwtExpiration
                         )
                 )
-
                 .signWith(getSigningKey())
                 .compact();
     }
-
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()

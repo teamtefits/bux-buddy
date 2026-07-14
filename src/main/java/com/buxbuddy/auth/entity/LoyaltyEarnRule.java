@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class LoyaltyEarnRule {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,31 +21,53 @@ public class LoyaltyEarnRule {
     /*
       DEFAULT
       DAY
-      PRODUCT
-      MEMBERSHIP
+      VIP
+      BIRTHDAY
+      FIRST_VISIT
+      CAMPAIGN
     */
     @Column(nullable = false)
     private String ruleType;
     /*
-      Example:
-
-      Normal = 1
-      Tuesday = 3
-      VIP = 5
+       1 = normal points
+       2 = double points
+       3 = triple points
     */
     @Column(nullable = false)
-    private Integer pointMultiplier;
+    private Integer multiplier;
     /*
-      MONDAY
-      TUESDAY
-      etc.
-
-      Only for DAY rules
+       Extra percentage bonus
+       Example:
+       Birthday +20%
+    */
+    private Integer bonusPercentage;
+    /*
+       DAY rule
+       MONDAY, TUESDAY...
     */
     private String dayOfWeek;
     /*
-      Is rule active?
+       Birthday month
+       1-12
     */
+    private Integer birthdayMonth;
+    /*
+       Minimum purchase required
+       Example:
+       Spend $50 get bonus
+    */
+    private Double minimumPurchaseAmount;
+    /*
+       Maximum points allowed
+    */
+    private Integer maxPoints;
+    /*
+       Rule start/end date
+       Example:
+       Christmas promotion
+    */
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     @Builder.Default
     private Boolean active = true;
     @ManyToOne(fetch = FetchType.LAZY)

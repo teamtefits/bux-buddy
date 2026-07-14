@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -39,7 +40,6 @@ public class CustomerServiceImpl implements CustomerService {
             );
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-
             throw new RuntimeException(
                     "Email already exists"
             );
@@ -59,7 +59,7 @@ public class CustomerServiceImpl implements CustomerService {
                                 )
                         );
         User user = User.builder()
-                .firstName(request.getName())
+                .firstName(request.getCustomerName())
                 .lastName("")
                 .email(request.getEmail())
                 .phone(request.getPhone())
@@ -79,7 +79,7 @@ public class CustomerServiceImpl implements CustomerService {
         User savedUser =
                 userRepository.save(user);
         Customer customer = Customer.builder()
-                .name(request.getName())
+                .customerName(request.getCustomerName())
                 .phone(request.getPhone())
                 .business(business)
                 .user(savedUser)
@@ -132,32 +132,35 @@ public class CustomerServiceImpl implements CustomerService {
                         );
         return mapToResponse(customer);
     }
+
+    @Override
+    public List<CustomerResponse> getAllCustomers() {
+        return customerRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     private CustomerResponse mapToResponse(Customer customer) {
+
         return CustomerResponse.builder()
                 .id(customer.getId())
-                .name(customer.getName())
+                .name(customer.getCustomerName())
                 .phone(customer.getPhone())
-                .loyaltyPoints(
-                        customer.getLoyaltyPoints()
-                )
-                .visitCount(
-                        customer.getVisitCount()
-                )
-                .lastVisit(
-                        customer.getLastVisit()
-                )
+                .loyaltyPoints(customer.getLoyaltyPoints())
+                .visitCount(customer.getVisitCount())
+                .lastVisit(customer.getLastVisit())
                 .businessId(
-                        customer.getBusiness().getId()
+                        customer.getBusiness() != null
+                                ? customer.getBusiness().getId()
+                                : null
                 )
                 .userId(
                         customer.getUser() != null
                                 ? customer.getUser().getId()
                                 : null
                 )
-                .createdAt(
-                        customer.getCreatedAt()
-                )
+                .createdAt(customer.getCreatedAt())
                 .build();
     }
-
 }

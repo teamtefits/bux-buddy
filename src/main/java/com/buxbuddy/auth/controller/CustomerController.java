@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/customers")
@@ -28,6 +30,16 @@ public class CustomerController {
                 HttpStatus.CREATED,
                 messageUtil.getMessage("customer.created"),
                 customerService.saveCustomer(request),
+                httpRequest
+        );
+    }
+    @GetMapping
+    public ResponseEntity<ApiSuccessResponse<List<CustomerResponse>>> getAllCustomers(
+            HttpServletRequest httpRequest) {
+        return ApiResponseUtil.success(
+                HttpStatus.OK,
+                messageUtil.getMessage("customer.found"),
+                customerService.getAllCustomers(),
                 httpRequest
         );
     }

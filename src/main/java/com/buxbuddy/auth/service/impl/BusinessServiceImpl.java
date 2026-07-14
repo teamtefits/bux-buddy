@@ -3,9 +3,12 @@ package com.buxbuddy.auth.service.impl;
 import com.buxbuddy.auth.dto.business.BusinessRequest;
 import com.buxbuddy.auth.dto.business.BusinessResponse;
 import com.buxbuddy.auth.entity.Business;
+import com.buxbuddy.auth.entity.BusinessCategory;
 import com.buxbuddy.auth.entity.Role;
 import com.buxbuddy.auth.entity.User;
+import com.buxbuddy.auth.enums.BusinessCategoryType;
 import com.buxbuddy.auth.enums.RoleType;
+import com.buxbuddy.auth.repository.BusinessCategoryRepository;
 import com.buxbuddy.auth.repository.BusinessRepository;
 import com.buxbuddy.auth.repository.RoleRepository;
 import com.buxbuddy.auth.repository.UserRepository;
@@ -25,53 +28,52 @@ public class BusinessServiceImpl implements BusinessService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final BusinessCategoryRepository businessCategoryRepository;
 
     @Override
     @Transactional
     public BusinessResponse createBusiness(BusinessRequest request) {
+        // 1. Find business category
+        BusinessCategoryType type = BusinessCategoryType.valueOf(request.getBusinessCategory());
+
+        BusinessCategory category = businessCategoryRepository
+                .findByName(type)
+                .orElseThrow(() ->
+                        new RuntimeException("Business category not found"));
+        // 2. Create business
         Business business = Business.builder()
-                .name(request.getName())
-                .businessType(request.getBusinessType())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .address(request.getAddress())
+                .businessName(request.getBusinessName())
+                .businessCategory(category)
+                .businessEmail(request.getBusinessEmail())
+                .businessPhone(request.getBusinessPhone())
+                .businessAddress(request.getBusinessAddress())
                 .status("ACTIVE")
                 .build();
+
+
         Business savedBusiness = businessRepository.save(business);
-        // 2. Find BUSINESS_OWNER role
+
+
+        // 3. Find BUSINESS_OWNER role
         Role ownerRole = roleRepository
                 .findByName(RoleType.BUSINESS_OWNER)
-                .orElseThrow(
-                        () -> new RuntimeException("Business owner role not found")
+                .orElseThrow(() ->
+                        new RuntimeException("Business owner role not found")
                 );
+
+
+        // 4. Create owner user
         User owner = User.builder()
-                .firstName(request.getName())
-                .lastName(request.getName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(
-                        request.getPassword()
-                ))
-
+                .firstName(request.getBusinessName())
+                .lastName(request.getBusinessName())
+                .email(request.getBusinessEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .business(savedBusiness)
-
                 .enabled(true)
-
                 .build();
-
-
-
-
         owner.getRoles().add(ownerRole);
-
-
-
         userRepository.save(owner);
-
-
-
-
         return mapToResponse(savedBusiness);
-
     }
 
     @Override
@@ -93,11 +95,15 @@ public class BusinessServiceImpl implements BusinessService {
     private BusinessResponse mapToResponse(Business business) {
         return BusinessResponse.builder()
                 .id(business.getId())
-                .name(business.getName())
-                .businessType(business.getBusinessType())
-                .email(business.getEmail())
-                .phone(business.getPhone())
-                .address(business.getAddress())
+                .name(business.getBusinessName())
+                .businessType(
+                        business.getBusinessCategory() != null
+                                ? business.getBusinessCategory().getName().name()
+                                : null
+                )
+                .email(business.getBusinessEmail())
+                .phone(business.getBusinessPhone())
+                .address(business.getBusinessAddress())
                 .status(business.getStatus())
                 .createdAt(business.getCreatedAt())
                 .build();

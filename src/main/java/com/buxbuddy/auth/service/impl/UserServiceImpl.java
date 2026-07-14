@@ -11,6 +11,7 @@ import com.buxbuddy.auth.repository.RoleRepository;
 import com.buxbuddy.auth.repository.UserRepository;
 import com.buxbuddy.auth.security.JwtService;
 import com.buxbuddy.auth.service.UserService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +23,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,19 +40,51 @@ public class UserServiceImpl implements UserService {
     private final JwtService jwtService;
 
     @Override
+    @Transactional
     public RegisterResponse register(RegisterRequest request) {
+
         // 1. Check email exists
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
-        // 2. Get default role (CUSTOMER)
-        Role role = roleRepository.findByName(RoleType.CUSTOMER).orElseThrow(() -> new RuntimeException("Role not found"));
-        // 3. Create user
-        User user = User.builder().firstName(request.getFirstName()).lastName(request.getLastName()).email(request.getEmail()).phone(request.getPhone()).password(passwordEncoder.encode(request.getPassword())).roles(Set.of(role)).enabled(true).build();
-        // 4. Save user
+
+        // 2. Get requested role
+        RoleType requestedRole = request.getRole();
+
+        // Default role if frontend does not send role
+        if (requestedRole == null) {
+            requestedRole = RoleType.CUSTOMER;
+        }
+
+        // 3. Prevent public ADMIN creation
+        if (requestedRole == RoleType.ADMIN) {
+            throw new RuntimeException("Admin registration is not allowed");
+        }
+
+        // 4. Find role
+        Role role = roleRepository.findByName(requestedRole)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+
+        // 5. Create user
+        User user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .roles(new HashSet<>(Collections.singletonList(role)))
+                .enabled(true)
+                .build();
+
+        // 6. Save user
         User savedUser = userRepository.save(user);
-        // 5. Return response
-        return RegisterResponse.builder().userId(savedUser.getId()).email(savedUser.getEmail()).message("User registered successfully").build();
+
+        // 7. Return response
+        return RegisterResponse.builder()
+                .userId(savedUser.getId())
+                .email(savedUser.getEmail())
+                .message("User registered successfully")
+                .build();
     }
     @Override
     public RegisterResponse login(RegisterRequest request) {
