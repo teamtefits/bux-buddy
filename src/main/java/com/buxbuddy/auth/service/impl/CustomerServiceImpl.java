@@ -142,22 +142,15 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private CustomerResponse mapToResponse(Customer customer) {
-
         return CustomerResponse.builder()
-                .id(customer.getId())
-                .name(customer.getCustomerName())
+                .customerID(customer.getId())
+                .customerName(customer.getCustomerName())
+                .email(customer.getUser().getEmail())
                 .phone(customer.getPhone())
-                .loyaltyPoints(customer.getLoyaltyPoints())
-                .visitCount(customer.getVisitCount())
-                .lastVisit(customer.getLastVisit())
+                .password(customer.getUser().getPassword())
                 .businessId(
                         customer.getBusiness() != null
                                 ? customer.getBusiness().getId()
-                                : null
-                )
-                .userId(
-                        customer.getUser() != null
-                                ? customer.getUser().getId()
                                 : null
                 )
                 .createdAt(customer.getCreatedAt())

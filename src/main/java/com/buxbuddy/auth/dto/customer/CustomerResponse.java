@@ -9,15 +9,11 @@ import java.util.UUID;
 @Data
 @Builder
 public class CustomerResponse {
-
-    private Long id;
-    private String name;
+    private Long customerID;
+    private String customerName;
+    private String email;
     private String phone;
-    private Integer loyaltyPoints;
-    private Integer visitCount;
-    private LocalDateTime lastVisit;
+    private String password;
     private Long businessId;
-    private UUID userId;
     private LocalDateTime createdAt;
-
 }

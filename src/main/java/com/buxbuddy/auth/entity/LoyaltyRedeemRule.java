@@ -2,6 +2,8 @@ package com.buxbuddy.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,7 +23,7 @@ public class LoyaltyRedeemRule {
     private Integer pointsRequired;
     // Discount value
     @Column(nullable = false)
-    private Double discountValue;
+    private BigDecimal discountValue;
 
     /*
        FIXED

@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
-
     /*
     User registration
      * */
@@ -37,7 +36,6 @@ public class AuthController {
                         )
                 );
     }
-
     /*
         User login
     * */

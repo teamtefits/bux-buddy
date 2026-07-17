@@ -1,17 +1,31 @@
 package com.buxbuddy.auth.entity;
 
+import com.buxbuddy.auth.enums.LoyaltyRuleType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "loyalty_earn_rule")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(
+        name = "loyalty_earn_rule",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_business_rule_type",
+                        columnNames = {
+                                "business_id",
+                                "rule_type"
+                        }
+                )
+        }
+)
 public class LoyaltyEarnRule {
 
     @Id
@@ -26,26 +40,28 @@ public class LoyaltyEarnRule {
       FIRST_VISIT
       CAMPAIGN
     */
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String ruleType;
+    private LoyaltyRuleType ruleType;
+
     /*
        1 = normal points
        2 = double points
        3 = triple points
     */
     @Column(nullable = false)
-    private Integer multiplier;
+    private BigDecimal multiplier;
     /*
        Extra percentage bonus
        Example:
        Birthday +20%
     */
-    private Integer bonusPercentage;
+    private BigDecimal bonusPercentage;
     /*
        DAY rule
        MONDAY, TUESDAY...
     */
-    private String dayOfWeek;
+    private DayOfWeek dayOfWeek;
     /*
        Birthday month
        1-12
@@ -56,7 +72,7 @@ public class LoyaltyEarnRule {
        Example:
        Spend $50 get bonus
     */
-    private Double minimumPurchaseAmount;
+    private BigDecimal minimumPurchaseAmount;
     /*
        Maximum points allowed
     */

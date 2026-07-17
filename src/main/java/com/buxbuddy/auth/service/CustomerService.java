@@ -2,6 +2,7 @@ package com.buxbuddy.auth.service;
 
 import com.buxbuddy.auth.dto.customer.CustomerRequest;
 import com.buxbuddy.auth.dto.customer.CustomerResponse;
+import com.buxbuddy.auth.entity.Customer;
 
 import java.util.List;
 
@@ -10,4 +11,5 @@ public interface CustomerService {
     CustomerResponse getCustomerById(Long id);
     CustomerResponse recordVisit(Long customerId);
     List<CustomerResponse> getAllCustomers();
+
 }

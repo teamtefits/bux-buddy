@@ -52,16 +52,12 @@ public class BusinessServiceImpl implements BusinessService {
 
 
         Business savedBusiness = businessRepository.save(business);
-
-
         // 3. Find BUSINESS_OWNER role
         Role ownerRole = roleRepository
                 .findByName(RoleType.BUSINESS_OWNER)
                 .orElseThrow(() ->
                         new RuntimeException("Business owner role not found")
                 );
-
-
         // 4. Create owner user
         User owner = User.builder()
                 .firstName(request.getBusinessName())

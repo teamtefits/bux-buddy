@@ -4,6 +4,7 @@ import com.buxbuddy.auth.enums.LoyaltyTransactionType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -32,10 +33,10 @@ public class LoyaltyTransaction {
     private Integer balanceAfterTransaction;
 
     // Purchase amount
-    private Double purchaseAmount;
+    private BigDecimal purchaseAmount;
 
     // Redeem amount
-    private Double redeemValue;
+    private BigDecimal redeemValue;
 
     private String description;
 
@@ -46,4 +47,5 @@ public class LoyaltyTransaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id")
     private Business business;
+    private LocalDateTime createdDate;
 }
