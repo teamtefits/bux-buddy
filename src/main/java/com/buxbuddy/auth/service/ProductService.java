@@ -3,6 +3,7 @@ package com.buxbuddy.auth.service;
 
 import com.buxbuddy.auth.dto.product.ProductRequest;
 import com.buxbuddy.auth.dto.product.ProductResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,4 +18,6 @@ public interface ProductService {
     List<ProductResponse> getAll(Long businessId);
 
     void delete(Long id);
+
+    void uploadProducts(MultipartFile file);
 }

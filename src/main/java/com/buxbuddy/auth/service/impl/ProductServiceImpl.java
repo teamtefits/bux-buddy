@@ -13,11 +13,18 @@ import com.buxbuddy.auth.repository.ProductRepository;
 import com.buxbuddy.auth.repository.StockHistoryRepository;
 import com.buxbuddy.auth.repository.VendorRepository;
 import com.buxbuddy.auth.service.ProductService;
+import com.opencsv.CSVReader;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -212,5 +219,113 @@ public class ProductServiceImpl implements ProductService {
                 .createdAt(LocalDateTime.now())
                 .build();
         stockHistoryRepository.save(history);
+    }
+    @Override
+    public void uploadProducts(MultipartFile file) {
+
+        System.out.println("File Name : " + file.getOriginalFilename());
+        System.out.println("Content Type : " + file.getContentType());
+        System.out.println("File Size : " + file.getSize());
+
+        List<Product> products = new ArrayList<>();
+
+        try (
+                CSVReader reader = new CSVReader(
+                        new InputStreamReader(file.getInputStream())
+                )
+        ) {
+
+            String[] row;
+            boolean header = true;
+
+            while ((row = reader.readNext()) != null) {
+
+                // Skip header row
+                if (header) {
+                    header = false;
+                    continue;
+                }
+
+                Product product = new Product();
+
+                product.setProductName(row[0]);
+                product.setItemCode(row[1]);
+                product.setBrand(row[2]);
+                product.setDepartment(row[3]);
+                product.setBatchNumber(row[4]);
+
+                product.setWeight(
+                        Double.parseDouble(row[5])
+                );
+
+                product.setWholesalePrice(
+                        BigDecimal.valueOf(
+                                Double.parseDouble(row[6])
+                        )
+                );
+
+                product.setRetailPrice(
+                        BigDecimal.valueOf(
+                                Double.parseDouble(row[7])
+                        )
+                );
+
+                product.setGstApplicable(
+                        Boolean.parseBoolean(row[8])
+                );
+
+                product.setCurrentStock(
+                        Integer.parseInt(row[9])
+                );
+
+                // Expiry Date
+                if (row.length > 10 && !row[10].isBlank()) {
+                    product.setExpiryDate(
+                            LocalDate.parse(row[10])
+                    );
+                }
+
+                // Delivery Date
+                if (row.length > 11 && !row[11].isBlank()) {
+                    product.setDeliveryDate(
+                            LocalDate.parse(row[11])
+                    );
+                }
+
+                // Vendor ID
+                Long vendorId = Long.parseLong(row[12]);
+
+                Vendor vendor = vendorRepository
+                        .findById(vendorId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Vendor not found: " + vendorId
+                                )
+                        );
+
+                product.setVendor(vendor);
+
+                // Business ID
+                Long businessId = Long.parseLong(row[13]);
+
+                Business business = businessRepository
+                        .findById(businessId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Business not found: " + businessId
+                                )
+                        );
+
+                product.setBusiness(business);
+
+                products.add(product);
+            }
+            productRepository.saveAll(products);
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "CSV upload failed: " + e.getMessage()
+            );
+        }
     }
 }

@@ -59,8 +59,6 @@ public class LoyaltyServiceImpl implements LoyaltyService {
     @Override
     public LoyaltyEarnResponse earnPoints(
             LoyaltyEarnRequest request) {
-
-
         // 1. Find customer by phone
         Customer customer =
                 customerRepository.findByPhone(request.getPhone())
@@ -68,9 +66,6 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                                 new RuntimeException(
                                         "Customer not found"
                                 ));
-
-
-
         // 2. Get DEFAULT earning rule
         LoyaltyEarnRule earnRule =
                 loyaltyEarnRuleRepository
@@ -82,29 +77,18 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                                 new RuntimeException(
                                         "Default loyalty rule not found"
                                 ));
-
-
-
         Integer earnedPoints = 0;
-
-
-
         // 3. Calculate points
         if (request.getPurchaseAmount()
                 .compareTo(
                         earnRule.getMinimumPurchaseAmount()
                 ) >= 0) {
-
-
             earnedPoints =
                     request.getPurchaseAmount()
                             .multiply(
                                     earnRule.getMultiplier()
                             )
                             .intValue();
-
-
-
             // Maximum point limit
             if (earnRule.getMaxPoints() != null &&
                     earnedPoints > earnRule.getMaxPoints()) {
@@ -113,35 +97,22 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                         earnRule.getMaxPoints();
             }
         }
-
-
-
         // 4. Update customer points
-
         Integer currentPoints =
                 customer.getLoyaltyPoints() == null
                         ? 0
                         : customer.getLoyaltyPoints();
-
-
         Integer updatedPoints =
                 currentPoints + earnedPoints;
-
-
         customer.setLoyaltyPoints(updatedPoints);
-
-
         customer.setVisitCount(
                 customer.getVisitCount() == null
                         ? 1
                         : customer.getVisitCount() + 1
         );
-
-
         customer.setLastVisit(
                 LocalDateTime.now()
         );
-
         customerRepository.save(customer);
         // 5. Get redeem rule
 

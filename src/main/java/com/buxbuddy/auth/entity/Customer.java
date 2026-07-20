@@ -9,19 +9,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name="customer")
+@Table(
+        name = "customer",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "phone")
+        }
+)
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String customerName;
-    @Column(nullable=false)
+    @Column(nullable=false,unique = true)
     private String phone;
     private Integer birthdayMonth;
     @Builder.Default

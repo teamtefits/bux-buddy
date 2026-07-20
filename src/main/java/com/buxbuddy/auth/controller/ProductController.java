@@ -6,6 +6,7 @@ import com.buxbuddy.auth.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -51,5 +52,14 @@ public class ProductController {
 
         productService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/batch-upload")
+    public ResponseEntity<String> uploadProducts(
+            @RequestParam("file") MultipartFile file) {
+        productService.uploadProducts(file);
+        return ResponseEntity.ok(
+                "Products uploaded successfully"
+        );
     }
 }

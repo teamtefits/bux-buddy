@@ -2,6 +2,7 @@ package com.buxbuddy.auth.entity;
 
 import com.buxbuddy.auth.enums.StockStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -76,12 +77,14 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal marginPercentage;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vendor_id")
+    @JoinColumn(name = "vendor_id", nullable = false)
     private Vendor vendor;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "business_id")
+    @JoinColumn(name = "business_id", nullable = false)
     private Business business;
 
     @PrePersist
