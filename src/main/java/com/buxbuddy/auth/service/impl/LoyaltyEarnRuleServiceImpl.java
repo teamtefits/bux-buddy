@@ -15,14 +15,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class LoyaltyEarnRuleServiceImpl implements LoyaltyEarnRuleService {
-
-
     private final LoyaltyEarnRuleRepository repository;
-
     private final BusinessRepository businessRepository;
-
-
-
     @Override
     public LoyaltyEarnRuleResponse createRule(
             LoyaltyEarnRuleRequest request) {

@@ -43,7 +43,18 @@ public class CustomerController {
                 httpRequest
         );
     }
-    @GetMapping("/{id}")
+
+    @GetMapping("/business/{businessId}")
+    public ResponseEntity<List<CustomerResponse>> getCustomersByBusiness(
+            @PathVariable Long businessId
+    ) {
+        return ResponseEntity.ok(
+                customerService.getCustomersByBusiness(businessId)
+        );
+    }
+
+
+    @GetMapping("/customer/{id}")
     public ResponseEntity<ApiSuccessResponse<CustomerResponse>> getById(
             @PathVariable Long id,
             HttpServletRequest httpRequest) {
@@ -59,7 +70,6 @@ public class CustomerController {
     public ResponseEntity<CustomerResponse> recordVisit(
             @PathVariable Long id
     ) {
-
         return ResponseEntity.ok(
                 customerService.recordVisit(id)
         );

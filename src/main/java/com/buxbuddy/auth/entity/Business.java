@@ -8,7 +8,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "business")
+@Table(
+        name = "business",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_business_name_location",
+                        columnNames = {
+                                "business_name",
+                                "city",
+                                "province_id",
+                                "postal_code"
+                        }
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,13 +35,36 @@ public class Business {
     @Column(nullable = false)
     private String businessName;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="category_id", nullable = false)
+    @JoinColumn(
+            name = "category_id",
+            nullable = false
+    )
     private BusinessCategory businessCategory;
+    // Contact Information
     @Column(nullable = false)
     private String businessEmail;
     @Column(nullable = false)
     private String businessPhone;
-    private String businessAddress;
+    // Address Information
+    private String addressLine1;
+    private String addressLine2;
+    @Column(nullable = false)
+    private String city;
+    @Column(nullable = false)
+    private String postalCode;
+    // Province -> Country relationship
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "province_id",
+            nullable = false
+    )
+    private Province province;
+    // Tax Information
+    private String taxNumber;
+    // GST/HST number, VAT number, etc.
+    @Builder.Default
+    private Boolean taxEnabled = true;
+    // Business Status
     @Builder.Default
     private String status = "ACTIVE";
     private LocalDateTime createdAt;
@@ -39,10 +75,10 @@ public class Business {
     )
     @Builder.Default
     private List<Customer> customers = new ArrayList<>();
-
     @PrePersist
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
     @PreUpdate
     public void onUpdate() {

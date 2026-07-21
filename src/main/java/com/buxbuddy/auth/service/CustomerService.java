@@ -11,5 +11,6 @@ public interface CustomerService {
     CustomerResponse getCustomerById(Long id);
     CustomerResponse recordVisit(Long customerId);
     List<CustomerResponse> getAllCustomers();
+    List<CustomerResponse> getCustomersByBusiness(Long businessId);
 
 }
