@@ -52,10 +52,8 @@ public class Product {
     )
     private String productCode;
     @Column(
-            unique = true
+            unique = false
     )
-    private String barcode;
-    @Column(nullable = false)
     private String brand;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(

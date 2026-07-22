@@ -4,6 +4,7 @@ import com.buxbuddy.auth.dto.product.ProductRequest;
 import com.buxbuddy.auth.dto.product.ProductResponse;
 import com.buxbuddy.auth.dto.product.TaxCalculationResponse;
 import com.buxbuddy.auth.entity.*;
+import com.buxbuddy.auth.enums.PackageType;
 import com.buxbuddy.auth.enums.StockAction;
 import com.buxbuddy.auth.enums.StockStatus;
 import com.buxbuddy.auth.repository.*;
@@ -264,97 +265,183 @@ public class ProductServiceImpl implements ProductService {
                 .build();
         stockHistoryRepository.save(history);
     }
+
     @Override
     @Transactional
     public void uploadProducts(MultipartFile file) {
+
         List<Product> products = new ArrayList<>();
+
         try (
                 CSVReader reader = new CSVReader(
                         new InputStreamReader(file.getInputStream())
                 )
         ) {
+
             String[] row;
-            boolean header = true;
+            boolean isHeader = true;
+
             while ((row = reader.readNext()) != null) {
 
-                if (header) {
-                    header = false;
+                if (isHeader) {
+                    isHeader = false;
                     continue;
                 }
-                Product product = new Product();
-                product.setProductName(row[0]);
-                product.setProductCode(row[1]);
-                product.setBrand(row[2]);
-                // Category ID
-                Long categoryId = Long.parseLong(row[3]);
-                ProductCategory category = productCategoryRepository
-                        .findById(categoryId)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Category not found: " + categoryId
-                                )
-                        );
-                product.setCategory(category);
-                product.setBatchNumber(row[4]);
 
-                if (!row[5].isBlank()) {
-                    product.setWeight(Double.parseDouble(row[5]));
-                }
-                product.setCost(
-                        BigDecimal.valueOf(
-                                Double.parseDouble(row[6])
-                        )
-                );
-                product.setRetailPrice(
-                        BigDecimal.valueOf(
-                                Double.parseDouble(row[7])
-                        )
-                );
-                int stock = Integer.parseInt(row[8]);
-                product.setCurrentStock(stock);
-                product.setStockStatus(
-                        stock > 0
-                                ? StockStatus.IN_STOCK
-                                : StockStatus.OUT_OF_STOCK
-                );
-                // Expiry Date
-                if (row.length > 9 && !row[9].isBlank()) {
-                    product.setExpiryDate(
-                            LocalDate.parse(row[9])
-                    );
-                }
-                // Delivery Date
-                if (row.length > 10 && !row[10].isBlank()) {
-                    product.setDeliveryDate(
-                            LocalDate.parse(row[10])
-                    );
-                }
-                // Vendor ID
-                Long vendorId = Long.parseLong(row[11]);
-                Vendor vendor = vendorRepository
-                        .findById(vendorId)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Vendor not found: " + vendorId
-                                )
-                        );
-                product.setVendor(vendor);
-                // Business ID
-                Long businessId = Long.parseLong(row[12]);
+                final String[] currentRow = row;
+
                 Business business = businessRepository
-                        .findById(businessId)
+                        .findByBusinessName(currentRow[0])
                         .orElseThrow(() ->
                                 new RuntimeException(
-                                        "Business not found: " + businessId
+                                        "Business not found: " + currentRow[0]
                                 )
                         );
-                product.setBusiness(business);
+
+                ProductCategory category = productCategoryRepository
+                        .findByCategoryName(currentRow[4])
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Category not found: " + currentRow[4]
+                                )
+                        );
+
+                Vendor vendor = vendorRepository
+                        .findByVendorNameAndBusinessId(
+                                currentRow[16],
+                                business.getId()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Vendor not found: " + currentRow[16]
+                                )
+                        );
+
+
+                Product product = Product.builder()
+                        .productName(currentRow[1])
+                        .productCode(currentRow[2])
+                        .brand(currentRow[3])
+                        .category(category)
+                        .batchNumber(currentRow[5])
+                        .business(business)
+                        .vendor(vendor)
+                        .build();
+
+
+                // Weight
+                if (!currentRow[6].isBlank()) {
+                    product.setWeight(
+                            Double.parseDouble(currentRow[6])
+                    );
+                }
+
+
+                // Volume
+                if (!currentRow[7].isBlank()) {
+                    product.setVolume(
+                            Double.parseDouble(currentRow[7])
+                    );
+                }
+
+
+                // Package Type
+                if (!currentRow[8].isBlank()) {
+                    product.setPackageType(
+                            PackageType.valueOf(
+                                    currentRow[8]
+                                            .trim()
+                                            .toUpperCase()
+                            )
+                    );
+                }
+
+
+                // Cost
+                if (!currentRow[9].isBlank()) {
+                    product.setCost(
+                            new BigDecimal(currentRow[9])
+                    );
+                }
+
+
+                // Retail Price
+                if (!currentRow[10].isBlank()) {
+                    product.setRetailPrice(
+                            new BigDecimal(currentRow[10])
+                    );
+                }
+
+
+                // Tax Applicable
+                if (!currentRow[11].isBlank()) {
+                    product.setTaxApplicable(
+                            Boolean.parseBoolean(currentRow[11])
+                    );
+                }
+
+
+                // Current Stock
+                Integer stock = 0;
+
+                if (!currentRow[12].isBlank()) {
+                    stock = Integer.parseInt(currentRow[12]);
+                }
+
+                product.setCurrentStock(stock);
+
+
+                // Stock Status
+                if (!currentRow[13].isBlank()) {
+
+                    product.setStockStatus(
+                            StockStatus.valueOf(
+                                    currentRow[13]
+                                            .trim()
+                                            .toUpperCase()
+                            )
+                    );
+
+                } else {
+
+                    product.setStockStatus(
+                            stock > 0
+                                    ? StockStatus.IN_STOCK
+                                    : StockStatus.OUT_OF_STOCK
+                    );
+                }
+
+
+                // Expiry Date
+                if (!currentRow[14].isBlank()) {
+
+                    product.setExpiryDate(
+                            LocalDate.parse(currentRow[14])
+                    );
+                }
+
+
+                // Delivery Date
+                if (!currentRow[15].isBlank()) {
+
+                    product.setDeliveryDate(
+                            LocalDate.parse(currentRow[15])
+                    );
+                }
+
+
                 products.add(product);
             }
+
+
             productRepository.saveAll(products);
+
+
         } catch (Exception e) {
+
             throw new RuntimeException(
-                    "CSV upload failed: " + e.getMessage()
+                    "CSV upload failed: " + e.getMessage(),
+                    e
             );
         }
     }
