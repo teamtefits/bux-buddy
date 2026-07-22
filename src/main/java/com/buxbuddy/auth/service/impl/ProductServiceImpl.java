@@ -178,8 +178,6 @@ public class ProductServiceImpl implements ProductService {
         productRepository.delete(product);
     }
     private ProductResponse mapToDto(Product product) {
-
-
         TaxCalculationResponse tax =
                 taxCalculationService.calculate(product);
         return ProductResponse.builder()

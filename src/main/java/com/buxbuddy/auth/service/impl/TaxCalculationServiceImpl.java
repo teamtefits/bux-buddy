@@ -15,49 +15,27 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class TaxCalculationServiceImpl implements TaxCalculationService {
-
-
     private final TaxRuleRepository taxRuleRepository;
-
     private final DepositRuleRepository depositRuleRepository;
-
-
     @Override
     public TaxCalculationResponse calculate(Product product) {
-
-
-        BigDecimal price = product.getRetailPrice();
-
-
+        BigDecimal price = product.getRetailPrice() != null
+                ? product.getRetailPrice()
+                : BigDecimal.ZERO;
         BigDecimal gstAmount = BigDecimal.ZERO;
-
         BigDecimal provincialTaxAmount = BigDecimal.ZERO;
-
         BigDecimal carbonTaxAmount = BigDecimal.ZERO;
-
-
         Province province =
                 product.getBusiness()
                         .getProvince();
-
-
         // Tax Calculation
-
         List<TaxRule> taxRules =
                 taxRuleRepository
                         .findByProvinceAndActiveTrue(province);
-
-
         for (TaxRule rule : taxRules) {
-
-
             BigDecimal taxAmount;
-
-
             if (rule.getCalculationType().name()
                     .equals("PERCENTAGE")) {
-
-
                 taxAmount =
                         price
                                 .multiply(rule.getRate())
@@ -66,15 +44,12 @@ public class TaxCalculationServiceImpl implements TaxCalculationService {
                                         4,
                                         RoundingMode.HALF_UP
                                 );
-
             } else {
                 taxAmount = rule.getRate();
-
             }
             switch (rule.getTaxType().getName()) {
                 case "GST":
-                    gstAmount =
-                            gstAmount.add(taxAmount);
+                    gstAmount = gstAmount.add(taxAmount);
                     break;
                 case "PST":
                 case "HST":
@@ -89,73 +64,51 @@ public class TaxCalculationServiceImpl implements TaxCalculationService {
             }
         }
         // Deposit Calculation
-        BigDecimal depositAmount =
-                BigDecimal.ZERO;
-
+        BigDecimal depositAmount = BigDecimal.ZERO;
         boolean depositApplicable = false;
         List<DepositRule> depositRules =
                 depositRuleRepository
                         .findByProvinceAndActiveTrue(province);
-        Double volume = product.getWeight();
+        // NULL weight will become 0.0
+        Double volume = product.getWeight() != null
+                ? product.getWeight()
+                : 0.0;
         for (DepositRule rule : depositRules) {
             boolean minimumMatch =
                     rule.getMinimumVolume() == null
                             ||
                             volume >= rule.getMinimumVolume();
-
-
             boolean maximumMatch =
                     rule.getMaximumVolume() == null
                             ||
                             volume <= rule.getMaximumVolume();
-
-
-
-            if(minimumMatch && maximumMatch
-                    && rule.getDepositApplicable()) {
-
-
+            if (minimumMatch
+                    && maximumMatch
+                    && Boolean.TRUE.equals(rule.getDepositApplicable())) {
                 depositApplicable = true;
-
                 depositAmount =
-                        rule.getAmount();
-
+                        rule.getAmount() != null
+                                ? rule.getAmount()
+                                : BigDecimal.ZERO;
                 break;
             }
         }
-
-
         BigDecimal totalTax =
                 gstAmount
                         .add(provincialTaxAmount)
                         .add(carbonTaxAmount);
-
-
-
         BigDecimal finalPrice =
                 price
                         .add(totalTax)
                         .add(depositAmount);
-
-
-
         return TaxCalculationResponse.builder()
-
                 .gstAmount(gstAmount)
-
                 .provincialTaxAmount(provincialTaxAmount)
-
                 .carbonTaxAmount(carbonTaxAmount)
-
                 .totalTax(totalTax)
-
                 .depositApplicable(depositApplicable)
-
                 .depositAmount(depositAmount)
-
                 .finalPrice(finalPrice)
-
                 .build();
-
     }
 }
