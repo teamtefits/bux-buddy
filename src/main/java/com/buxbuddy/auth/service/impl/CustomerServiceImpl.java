@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -42,15 +43,12 @@ public class CustomerServiceImpl implements CustomerService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
-
         Business business = businessRepository.findById(request.getBusinessId())
                 .orElseThrow(() ->
                         new RuntimeException("Business not found"));
-
         Role customerRole = roleRepository.findByName(RoleType.CUSTOMER)
                 .orElseThrow(() ->
                         new RuntimeException("CUSTOMER role not found"));
-
         User user = User.builder()
                 .firstName(request.getCustomerName())
                 .lastName("")
@@ -64,14 +62,25 @@ public class CustomerServiceImpl implements CustomerService {
                 .credentialsNonExpired(true)
                 .build();
 
-        User savedUser = userRepository.save(user);
 
+        User savedUser = userRepository.save(user);
         Customer customer = Customer.builder()
                 .customerName(request.getCustomerName())
                 .phone(request.getPhone())
+                // Address Information
+                .addressLine1(request.getAddressLine1())
+                .addressLine2(request.getAddressLine2())
+                .city(request.getCity())
+                .province(request.getProvince())
+                .postalCode(request.getPostalCode())
+                .country(request.getCountry())
+                // Personal Information
                 .birthdayMonth(request.getBirthdayMonth())
+                // Business Connection
                 .business(business)
+                // User Connection
                 .user(savedUser)
+                // Default values
                 .loyaltyPoints(0)
                 .visitCount(0)
                 .monthlySpend(0.0)
@@ -80,9 +89,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-
         Customer savedCustomer = customerRepository.save(customer);
-
         return mapToResponse(savedCustomer);
     }
 
@@ -112,6 +119,7 @@ public class CustomerServiceImpl implements CustomerService {
                 customerRepository.save(customer);
         return mapToResponse(updatedCustomer);
     }
+
     @Override
     @Transactional(readOnly = true)
     public CustomerResponse getCustomerById(Long id) {
@@ -134,30 +142,45 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private CustomerResponse mapToResponse(Customer customer) {
-
         return CustomerResponse.builder()
                 .customerId(customer.getId())
                 .customerName(customer.getCustomerName())
-                .email(customer.getUser() != null
-                        ? customer.getUser().getEmail()
-                        : null)
                 .phone(customer.getPhone())
+
+                // Email from User table
+                .email(
+                        customer.getUser() != null
+                                ? customer.getUser().getEmail()
+                                : null
+                )
+
+                // Address Information
+                .addressLine1(customer.getAddressLine1())
+                .addressLine2(customer.getAddressLine2())
+                .city(customer.getCity())
+                .province(customer.getProvince())
+                .postalCode(customer.getPostalCode())
+                .country(customer.getCountry())
+
+                // Personal Information
                 .birthdayMonth(customer.getBirthdayMonth())
-                .loyaltyPoints(customer.getLoyaltyPoints())
-                .visitCount(customer.getVisitCount())
-                .lastVisit(customer.getLastVisit())
-                .tier(customer.getTier())
-                .monthlySpend(customer.getMonthlySpend())
-                .lifetimeSpend(customer.getLifetimeSpend())
-                .businessId(customer.getBusiness() != null
-                        ? customer.getBusiness().getId()
-                        : null)
-                .businessName(customer.getBusiness() != null
-                        ? customer.getUser().getFirstName()
-                        : null)
-                .userId(customer.getUser() != null
-                        ? customer.getUser().getId()
-                        : null)
+                // Business Information
+                .businessId(
+                        customer.getBusiness() != null
+                                ? customer.getBusiness().getId()
+                                : null
+                )
+                .businessName(
+                        customer.getBusiness() != null
+                                ? customer.getBusiness().getBusinessName()
+                                : null
+                )
+                // User connection
+                .userId(
+                        customer.getUser() != null
+                                ? customer.getUser().getId()
+                                : null
+                )
                 .createdAt(customer.getCreatedAt())
                 .updatedAt(customer.getUpdatedAt())
                 .build();
@@ -166,17 +189,82 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public List<CustomerResponse> getCustomersByBusiness(Long businessId) {
-
         Business business = businessRepository.findById(businessId)
                 .orElseThrow(() ->
                         new RuntimeException("Business not found")
                 );
-
         List<Customer> customers =
                 customerRepository.findByBusinessId(businessId);
-
         return customers.stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+    @Override
+    @Transactional
+    public CustomerResponse updateCustomer(
+            Long customerId,
+            CustomerRequest request
+    ) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() ->
+                        new RuntimeException("Customer not found"));
+        // Update Customer Profile
+        customer.setCustomerName(
+                request.getCustomerName()
+        );
+        customer.setPhone(
+                request.getPhone()
+        );
+        // Address
+        customer.setAddressLine1(
+                request.getAddressLine1()
+        );
+        customer.setAddressLine2(
+                request.getAddressLine2()
+        );
+        customer.setCity(
+                request.getCity()
+        );
+        customer.setProvince(
+                request.getProvince()
+        );
+        customer.setPostalCode(
+                request.getPostalCode()
+        );
+        customer.setCountry(
+                request.getCountry()
+        );
+        // Personalization
+        customer.setBirthdayMonth(
+                request.getBirthdayMonth()
+        );
+        // Update login email in User table
+        if (customer.getUser() != null
+                && request.getEmail() != null) {
+            customer.getUser()
+                    .setEmail(request.getEmail());
+            userRepository.save(customer.getUser());
+        }
+        customer.setUpdatedAt(
+                LocalDateTime.now()
+        );
+        Customer updatedCustomer =
+                customerRepository.save(customer);
+        return mapToResponse(updatedCustomer);
+    }
+    @Override
+    @Transactional
+    public void deleteCustomer(Long customerId) {
+
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() ->
+                        new RuntimeException("Customer not found"));
+        // Remove user connection
+        if (customer.getUser() != null) {
+            User user = customer.getUser();
+            customer.setUser(null);
+            userRepository.delete(user);
+        }
+        customerRepository.delete(customer);
     }
 }

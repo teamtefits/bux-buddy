@@ -1,14 +1,6 @@
 package com.buxbuddy.auth.dto.customer;
-import com.buxbuddy.auth.enums.RoleType;
-import lombok.Data;
 
-import java.math.BigInteger;
-import java.util.UUID;
-
-import com.buxbuddy.auth.enums.CustomerTier;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -16,22 +8,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerRequest {
-
-    private Long id;
     private String customerName;
     private String phone;
+    // Login information
     private String email;
     private String password;
+    // Address Information
+    private String addressLine1;
+    private String addressLine2;
+    private String city;
+    private String province;
+    private String postalCode;
+    private String country;
     private Integer birthdayMonth;
-    private Integer loyaltyPoints;
-    private Integer visitCount;
-    private LocalDateTime lastVisit;
-    private CustomerTier tier;
-    private Double monthlySpend;
-    private Double lifetimeSpend;
     private Long businessId;
-    private String businessName;
-    private Long userId;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

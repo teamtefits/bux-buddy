@@ -13,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
@@ -33,26 +31,6 @@ public class CustomerController {
                 httpRequest
         );
     }
-    @GetMapping
-    public ResponseEntity<ApiSuccessResponse<List<CustomerResponse>>> getAllCustomers(
-            HttpServletRequest httpRequest) {
-        return ApiResponseUtil.success(
-                HttpStatus.OK,
-                messageUtil.getMessage("customer.found"),
-                customerService.getAllCustomers(),
-                httpRequest
-        );
-    }
-
-    @GetMapping("/business/{businessId}")
-    public ResponseEntity<List<CustomerResponse>> getCustomersByBusiness(
-            @PathVariable Long businessId
-    ) {
-        return ResponseEntity.ok(
-                customerService.getCustomersByBusiness(businessId)
-        );
-    }
-
 
     @GetMapping("/customer/{id}")
     public ResponseEntity<ApiSuccessResponse<CustomerResponse>> getById(
@@ -66,12 +44,50 @@ public class CustomerController {
         );
     }
 
+    @PutMapping("/{customerId}")
+    public ResponseEntity<ApiSuccessResponse<CustomerResponse>> updateCustomer(
+            @PathVariable Long customerId,
+            @RequestBody CustomerRequest request,
+            HttpServletRequest httpRequest) {
+
+        return ApiResponseUtil.success(
+                HttpStatus.OK,
+                messageUtil.getMessage("customer.updated"),
+                customerService.updateCustomer(customerId, request),
+                httpRequest
+        );
+    }
+    
+    @DeleteMapping("/{customerId}")
+    public ResponseEntity<ApiSuccessResponse<Void>> deleteCustomer(
+            @PathVariable Long customerId,
+            HttpServletRequest httpRequest) {
+        customerService.deleteCustomer(customerId);
+        return ApiResponseUtil.success(
+                HttpStatus.OK,
+                messageUtil.getMessage("customer.deleted"),
+                null,
+                httpRequest
+        );
+    }
+
     @PostMapping("/{id}/visit")
     public ResponseEntity<CustomerResponse> recordVisit(
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(
                 customerService.recordVisit(id)
+        );
+    }
+    @GetMapping("/business/{businessId}")
+    public ResponseEntity<ApiSuccessResponse<List<CustomerResponse>>> getCustomersByBusiness(
+            @PathVariable Long businessId,
+            HttpServletRequest httpRequest) {
+        return ApiResponseUtil.success(
+                HttpStatus.OK,
+                messageUtil.getMessage("customer.found"),
+                customerService.getCustomersByBusiness(businessId),
+                httpRequest
         );
     }
 

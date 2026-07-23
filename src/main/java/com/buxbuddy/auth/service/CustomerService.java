@@ -12,5 +12,6 @@ public interface CustomerService {
     CustomerResponse recordVisit(Long customerId);
     List<CustomerResponse> getAllCustomers();
     List<CustomerResponse> getCustomersByBusiness(Long businessId);
-
+    CustomerResponse updateCustomer(Long customerId, CustomerRequest request);
+    void deleteCustomer(Long customerId);
 }
