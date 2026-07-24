@@ -13,7 +13,9 @@ import java.util.Optional;
 @Repository
 public interface BusinessRepository extends JpaRepository<Business, Long> {
     Optional<Business> findByBusinessName(String businessName);
-
+    Optional<Business> findByBusinessNameIgnoreCase(
+            String businessName
+    );
     @Query("""
             SELECT b
             FROM Business b

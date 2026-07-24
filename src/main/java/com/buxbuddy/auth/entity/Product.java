@@ -47,7 +47,7 @@ public class Product {
     )
     private String productName;
     @Column(
-            name = "item_code",
+            name = "product_Code",
             nullable = false
     )
     private String productCode;

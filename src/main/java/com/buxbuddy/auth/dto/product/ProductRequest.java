@@ -1,5 +1,6 @@
 package com.buxbuddy.auth.dto.product;
 
+import com.buxbuddy.auth.enums.PackageType;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -10,14 +11,19 @@ public class ProductRequest {
 
     // Product Information
     private String productName;
-    private String itemCode;
+    private String productCode;
     private String brand;
     private Long categoryId;
     private String batchNumber;
+    // Size / Packaging
     private Double weight;
+    private Double volume;
+    private PackageType packageType;
     // Pricing
-    private BigDecimal wholesalePrice;
+    private BigDecimal cost;
     private BigDecimal retailPrice;
+    // Tax
+    private Boolean taxApplicable;
     // Stock
     private Integer currentStock;
     // Dates
