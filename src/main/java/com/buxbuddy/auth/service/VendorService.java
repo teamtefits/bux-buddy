@@ -10,5 +10,7 @@ public interface VendorService {
 
     VendorResponse saveVendor(VendorRequest request);
     List<VendorResponse> getVendorsByBusiness(Long businessId);
+    VendorResponse updateVendor(Long vendorId, VendorRequest request);
+    void deleteVendor(Long vendorId);
 
 }

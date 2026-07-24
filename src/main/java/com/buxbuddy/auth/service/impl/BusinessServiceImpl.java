@@ -5,11 +5,11 @@ import com.buxbuddy.auth.dto.business.BusinessResponse;
 import com.buxbuddy.auth.dto.business.CountryResponse;
 import com.buxbuddy.auth.dto.business.ProvinceResponse;
 import com.buxbuddy.auth.entity.*;
-import com.buxbuddy.auth.enums.BusinessCategoryType;
+import com.buxbuddy.auth.exception.ResourceNotFoundException;
 import com.buxbuddy.auth.enums.RoleType;
 import com.buxbuddy.auth.repository.*;
 import com.buxbuddy.auth.service.BusinessService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +26,7 @@ public class BusinessServiceImpl implements BusinessService {
     private final UserRepository userRepository;
     private final BusinessCategoryRepository businessCategoryRepository;
     private final ProvinceRepository provinceRepository;
+
     @Override
     @Transactional
     public BusinessResponse createBusiness(BusinessRequest request) {
@@ -94,10 +95,66 @@ public class BusinessServiceImpl implements BusinessService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BusinessResponse getBusinessById(Long id) {
         Business business = businessRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Business not found"));
         return mapToResponse(business);
+    }
+
+    @Override
+    @Transactional()
+    public BusinessResponse updateBusiness(Long businessId,
+                                           BusinessRequest request) {
+
+        Business business = businessRepository.findById(businessId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Business not found"));
+
+        business.setBusinessName(request.getBusinessName());
+        business.setBusinessEmail(request.getBusinessEmail());
+        business.setBusinessPhone(request.getBusinessPhone());
+        business.setAddressLine1(request.getAddressLine1());
+        business.setAddressLine2(request.getAddressLine2());
+        business.setCity(request.getCity());
+        business.setPostalCode(request.getPostalCode());
+        business.setTaxNumber(request.getTaxNumber());
+        business.setTaxEnabled(request.getTaxEnabled());
+
+        if (request.getBusinessCategory() != null) {
+
+            BusinessCategory category = businessCategoryRepository
+                    .findByName(request.getBusinessCategory())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Business category not found"
+                            ));
+
+            business.setBusinessCategory(category);
+        }
+        if (request.getProvinceId() != null) {
+            Province province = provinceRepository
+                    .findById(request.getProvinceId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Province not found"));
+
+            business.setProvince(province);
+        }
+
+        return mapToResponse(
+                businessRepository.save(business)
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deleteBusiness(Long businessId) {
+        Business business = businessRepository.findById(businessId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Business not found with id: " + businessId
+                        ));
+        businessRepository.delete(business);
     }
 
     private BusinessResponse mapToResponse(Business business) {

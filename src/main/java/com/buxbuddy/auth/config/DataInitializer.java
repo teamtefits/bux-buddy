@@ -296,10 +296,7 @@ public class DataInitializer implements CommandLineRunner {
                     "ALCOHOL",
                     "TOBACCO",
                     "OTHER"
-
             };
-
-
             for (String category : categories) {
 
 

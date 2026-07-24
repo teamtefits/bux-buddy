@@ -41,7 +41,6 @@ public class VendorController {
     public ResponseEntity<ApiSuccessResponse<List<VendorResponse>>> getVendorsByBusiness(
             @RequestParam(name = "businessId") Long businessId,
             HttpServletRequest httpRequest) {
-
         return ApiResponseUtil.success(
                 HttpStatus.OK,
                 messageUtil.getMessage("vendor.list"),
@@ -49,4 +48,32 @@ public class VendorController {
                 httpRequest
         );
     }
+    @PutMapping("/{vendorId}")
+    public ResponseEntity<ApiSuccessResponse<VendorResponse>> update(
+            @PathVariable Long vendorId,
+            @RequestBody VendorRequest request,
+            HttpServletRequest httpRequest) {
+
+        return ApiResponseUtil.success(
+                HttpStatus.OK,
+                messageUtil.getMessage("vendor.updated"),
+                vendorService.updateVendor(vendorId, request),
+                httpRequest
+        );
+    }
+    @DeleteMapping("/{vendorId}")
+    public ResponseEntity<ApiSuccessResponse<Void>> delete(
+            @PathVariable Long vendorId,
+            HttpServletRequest httpRequest) {
+
+        vendorService.deleteVendor(vendorId);
+
+        return ApiResponseUtil.success(
+                HttpStatus.OK,
+                messageUtil.getMessage("vendor.deleted"),
+                null,
+                httpRequest
+        );
+    }
+
 }

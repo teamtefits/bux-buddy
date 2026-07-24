@@ -9,4 +9,6 @@ public interface BusinessService {
     BusinessResponse createBusiness(BusinessRequest request);
     List<BusinessResponse> getAllBusinesses();
     BusinessResponse getBusinessById(Long id);
+    BusinessResponse updateBusiness(Long id, BusinessRequest request);
+    void deleteBusiness(Long id);
 }
