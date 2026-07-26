@@ -50,7 +50,7 @@ public class LoyaltyEarnRule {
        3 = triple points
     */
     @Column(nullable = false)
-    private BigDecimal multiplier;
+    private BigDecimal cashbackPercentage;
     /*
        Extra percentage bonus
        Example:

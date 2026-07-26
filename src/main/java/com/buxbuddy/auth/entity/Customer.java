@@ -4,6 +4,7 @@ import com.buxbuddy.auth.enums.CustomerTier;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,35 +26,22 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String customerName;
-
     @Column(nullable = false, unique = true)
     private String phone;
-
     // Address Information
     private String addressLine1;
-
     private String addressLine2;
-
     private String city;
-
     private String province;
-
     private String postalCode;
-
     private String country;
-
     private Integer birthdayMonth;
-
     @Builder.Default
     private Integer loyaltyPoints = 0;
-
     @Builder.Default
     private Integer visitCount = 0;
-
     private LocalDateTime lastVisit;
-
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private CustomerTier tier = CustomerTier.NORMAL;
@@ -63,24 +51,20 @@ public class Customer {
 
     @Builder.Default
     private Double lifetimeSpend = 0.0;
-
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id")
     private Business business;
-
-
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
-
-
     // Login connection
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+    private LocalDateTime firstVisit;
 
-
+    @Column(precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal redeemableAmount = BigDecimal.ZERO;
     // Loyalty transactions
     @OneToMany(
             mappedBy = "customer",
@@ -88,8 +72,6 @@ public class Customer {
     )
     @Builder.Default
     private List<LoyaltyTransaction> transactions = new ArrayList<>();
-
-
     // Customer notes
     @OneToMany(
             mappedBy = "customer",
@@ -99,8 +81,6 @@ public class Customer {
     )
     @Builder.Default
     private List<CustomerNote> notes = new ArrayList<>();
-
-
     // Customer feedback
     @OneToMany(
             mappedBy = "customer",

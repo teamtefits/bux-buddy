@@ -16,4 +16,5 @@ public class LoyaltyEarnResponse {
     private BigDecimal rewardValue;
     private Integer totalPoints;
     private String message;
+    private BigDecimal redeemableAmount;
 }

@@ -24,11 +24,12 @@ public class LoyaltyEarnRuleServiceImpl implements LoyaltyEarnRuleService {
                 businessRepository.findById(request.getBusinessId())
                         .orElseThrow(() ->
                                 new RuntimeException("Business not found"));
+
         LoyaltyEarnRule rule =
                 LoyaltyEarnRule.builder()
                         .name(request.getName())
                         .ruleType(request.getRuleType())
-                        .multiplier(request.getMultiplier())
+                        .cashbackPercentage(request.getCashbackPercentage())
                         .bonusPercentage(request.getBonusPercentage())
                         .dayOfWeek(request.getDayOfWeek())
                         .birthdayMonth(request.getBirthdayMonth())
@@ -45,6 +46,10 @@ public class LoyaltyEarnRuleServiceImpl implements LoyaltyEarnRuleService {
                         )
                         .business(business)
                         .build();
+        System.out.println("Entity cashbackPercentage = "
+                + rule.getCashbackPercentage());
+        System.out.println("Entity minimumPurchaseAmount = "
+                + rule.getMinimumPurchaseAmount());
         LoyaltyEarnRule saved =
                 repository.save(rule);
         return mapToResponse(saved);
@@ -56,6 +61,15 @@ public class LoyaltyEarnRuleServiceImpl implements LoyaltyEarnRuleService {
     }
 
     @Override
+    public List<LoyaltyEarnRuleResponse> getAllRules(Long businessId) {
+
+        return repository.findByBusinessIdOrderByRuleType(businessId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
     public LoyaltyEarnRuleResponse getRuleById(Long id) {
         return null;
     }
@@ -64,17 +78,52 @@ public class LoyaltyEarnRuleServiceImpl implements LoyaltyEarnRuleService {
     public LoyaltyEarnRuleResponse updateRule(Long id, LoyaltyEarnRuleRequest request) {
         return null;
     }
-    @Override
-    public void deleteRule(Long id) {
 
+    @Override
+    public LoyaltyEarnRuleResponse getRule(Long ruleId, Long businessId) {
+        LoyaltyEarnRule rule = repository.findByIdAndBusinessId(ruleId, businessId)
+                .orElseThrow(() -> new RuntimeException("Rule not found"));
+        return mapToResponse(rule);
     }
+
+    @Override
+    public LoyaltyEarnRuleResponse updateRule(Long ruleId,
+                                              Long businessId,
+                                              LoyaltyEarnRuleRequest request) {
+
+        LoyaltyEarnRule rule = repository.findByIdAndBusinessId(ruleId, businessId)
+                .orElseThrow(() -> new RuntimeException("Rule not found"));
+        rule.setName(request.getName());
+        rule.setRuleType(request.getRuleType());
+        rule.setCashbackPercentage(request.getCashbackPercentage());
+        rule.setBonusPercentage(request.getBonusPercentage());
+        rule.setDayOfWeek(request.getDayOfWeek());
+        rule.setBirthdayMonth(request.getBirthdayMonth());
+        rule.setMinimumPurchaseAmount(request.getMinimumPurchaseAmount());
+        rule.setMaxPoints(request.getMaxPoints());
+        rule.setStartDate(request.getStartDate());
+        rule.setEndDate(request.getEndDate());
+        rule.setActive(request.getActive());
+        repository.save(rule);
+        return mapToResponse(rule);
+    }
+
+    @Override
+    public void deleteRule(Long ruleId, Long businessId) {
+
+        LoyaltyEarnRule rule = repository.findByIdAndBusinessId(ruleId, businessId)
+                .orElseThrow(() -> new RuntimeException("Rule not found"));
+
+        repository.delete(rule);
+    }
+
     private LoyaltyEarnRuleResponse mapToResponse(
             LoyaltyEarnRule rule){
         return LoyaltyEarnRuleResponse.builder()
                 .id(rule.getId())
                 .name(rule.getName())
                 .ruleType(rule.getRuleType())
-                .multiplier(rule.getMultiplier())
+                .multiplier(rule.getCashbackPercentage())
                 .bonusPercentage(rule.getBonusPercentage())
                 .minimumPurchaseAmount(
                         rule.getMinimumPurchaseAmount()

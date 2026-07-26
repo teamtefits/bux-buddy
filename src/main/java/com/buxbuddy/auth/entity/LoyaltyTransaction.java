@@ -1,5 +1,6 @@
 package com.buxbuddy.auth.entity;
 
+import com.buxbuddy.auth.enums.LoyaltyRuleType;
 import com.buxbuddy.auth.enums.LoyaltyTransactionType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,4 +49,6 @@ public class LoyaltyTransaction {
     @JoinColumn(name = "business_id")
     private Business business;
     private LocalDateTime createdDate;
+    @Enumerated(EnumType.STRING)
+    private LoyaltyRuleType earnedByRule;
 }

@@ -5,10 +5,9 @@ import com.buxbuddy.auth.dto.Loyalty.rule.LoyaltyEarnRuleResponse;
 import com.buxbuddy.auth.service.LoyaltyEarnRuleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/loyalty/rules")
@@ -22,6 +21,34 @@ public class LoyaltyEarnRuleController {
         return ResponseEntity.ok(
                 service.createRule(request)
         );
+    }
+    @GetMapping("/business/{businessId}")
+    public ResponseEntity<List<LoyaltyEarnRuleResponse>> getAllByBusiness(
+            @PathVariable Long businessId) {
+        return ResponseEntity.ok(service.getAllRules(businessId));
+    }
+
+    @GetMapping("/{ruleId}/business/{businessId}")
+    public ResponseEntity<LoyaltyEarnRuleResponse> getById(
+            @PathVariable Long ruleId,
+            @PathVariable Long businessId) {
+        return ResponseEntity.ok(service.getRule(ruleId, businessId));
+    }
+
+    @PutMapping("/{ruleId}/business/{businessId}")
+    public ResponseEntity<LoyaltyEarnRuleResponse> update(
+            @PathVariable Long ruleId,
+            @PathVariable Long businessId,
+            @RequestBody LoyaltyEarnRuleRequest request) {
+        return ResponseEntity.ok(service.updateRule(ruleId, businessId, request));
+    }
+
+    @DeleteMapping("/{ruleId}/business/{businessId}")
+    public ResponseEntity<String> delete(
+            @PathVariable Long ruleId,
+            @PathVariable Long businessId) {
+        service.deleteRule(ruleId, businessId);
+        return ResponseEntity.ok("Rule deleted successfully.");
     }
 
 }

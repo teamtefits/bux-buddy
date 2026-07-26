@@ -12,8 +12,10 @@ import com.buxbuddy.auth.repository.*;
 import com.buxbuddy.auth.service.LoyaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Service
@@ -57,15 +59,30 @@ public class LoyaltyServiceImpl implements LoyaltyService {
 
 
     @Override
+    @Transactional
     public LoyaltyEarnResponse earnPoints(
             LoyaltyEarnRequest request) {
-        // 1. Find customer by phone
+
+        // 1. Find customer
         Customer customer =
                 customerRepository.findByPhone(request.getPhone())
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Customer not found"
                                 ));
+
+
+        // Validate purchase amount
+        if (request.getPurchaseAmount() == null ||
+                request.getPurchaseAmount()
+                        .compareTo(BigDecimal.ZERO) <= 0) {
+
+            throw new RuntimeException(
+                    "Purchase amount must be greater than zero"
+            );
+        }
+
+
         // 2. Get DEFAULT earning rule
         LoyaltyEarnRule earnRule =
                 loyaltyEarnRuleRepository
@@ -77,71 +94,149 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                                 new RuntimeException(
                                         "Default loyalty rule not found"
                                 ));
+
+
         Integer earnedPoints = 0;
-        // 3. Calculate points
+
+        BigDecimal earnedCashbackAmount =
+                BigDecimal.ZERO;
+
+
+        // 3. Calculate cashback and points
+
+        BigDecimal minimumAmount =
+                earnRule.getMinimumPurchaseAmount() == null
+                        ? BigDecimal.ZERO
+                        : earnRule.getMinimumPurchaseAmount();
+
+
         if (request.getPurchaseAmount()
-                .compareTo(
-                        earnRule.getMinimumPurchaseAmount()
-                ) >= 0) {
-            earnedPoints =
+                .compareTo(minimumAmount) >= 0) {
+
+
+            if (earnRule.getCashbackPercentage() == null) {
+
+                throw new RuntimeException(
+                        "Cashback percentage is not configured"
+                );
+            }
+
+
+        /*
+            Example:
+
+            Purchase = $350
+            Cashback = 2%
+
+            350 * 2 / 100 = $7
+
+            $7 * 1000 = 7000 points
+        */
+
+
+            earnedCashbackAmount =
                     request.getPurchaseAmount()
                             .multiply(
-                                    earnRule.getMultiplier()
+                                    earnRule.getCashbackPercentage()
+                            )
+                            .divide(
+                                    BigDecimal.valueOf(100),
+                                    2,
+                                    RoundingMode.HALF_UP
+                            );
+
+
+            earnedPoints =
+                    earnedCashbackAmount
+                            .multiply(
+                                    BigDecimal.valueOf(1000)
                             )
                             .intValue();
+
+
+
             // Maximum point limit
             if (earnRule.getMaxPoints() != null &&
                     earnedPoints > earnRule.getMaxPoints()) {
 
                 earnedPoints =
                         earnRule.getMaxPoints();
+
+
+                // recalculate cashback after max points
+                earnedCashbackAmount =
+                        BigDecimal.valueOf(earnedPoints)
+                                .divide(
+                                        BigDecimal.valueOf(1000),
+                                        2,
+                                        RoundingMode.HALF_UP
+                                );
             }
         }
+
+
+
         // 4. Update customer points
+
         Integer currentPoints =
                 customer.getLoyaltyPoints() == null
                         ? 0
                         : customer.getLoyaltyPoints();
+
+
         Integer updatedPoints =
                 currentPoints + earnedPoints;
-        customer.setLoyaltyPoints(updatedPoints);
+
+
+        customer.setLoyaltyPoints(
+                updatedPoints
+        );
+
+
+        // Update redeemable dollar balance
+
+        BigDecimal currentRedeemable =
+                customer.getRedeemableAmount() == null
+                        ? BigDecimal.ZERO
+                        : customer.getRedeemableAmount();
+
+
+        customer.setRedeemableAmount(
+                currentRedeemable.add(
+                        earnedCashbackAmount
+                )
+        );
+
+
+
         customer.setVisitCount(
                 customer.getVisitCount() == null
                         ? 1
                         : customer.getVisitCount() + 1
         );
+
+
         customer.setLastVisit(
                 LocalDateTime.now()
         );
+
+
+
+        customer.setLifetimeSpend(
+                (customer.getLifetimeSpend() == null
+                        ? 0.0
+                        : customer.getLifetimeSpend())
+                        +
+                        request.getPurchaseAmount()
+                                .doubleValue()
+        );
+
+
         customerRepository.save(customer);
-        // 5. Get redeem rule
 
-        LoyaltyRedeemRule redeemRule =
-                loyaltyRedeemRuleRepository
-                        .findByBusiness_IdAndActiveTrue(
-                                customer.getBusiness().getId()
-                        )
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Redeem rule not found"
-                                ));
-        // 6. Calculate reward value
 
-        BigDecimal rewardValue =
-                BigDecimal.ZERO;
-        if (earnedPoints > 0) {
-            rewardValue =
-                    BigDecimal.valueOf(earnedPoints)
-                            .divide(
-                                    BigDecimal.valueOf(
-                                            redeemRule.getPointsRequired()
-                                    )
-                            )
-                            .multiply(
-                                    redeemRule.getDiscountValue()
-                            );
-        }
-        // 7. Save loyalty transaction
+
+        // 5. Save loyalty transaction
 
         LoyaltyTransaction transaction =
                 LoyaltyTransaction.builder()
@@ -153,21 +248,33 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                         .points(
                                 earnedPoints
                         )
-                        .purchaseAmount(
-                                request.getPurchaseAmount()
+                        .earnedCashbackAmount(
+                                earnedCashbackAmount
                         )
                         .balanceAfterTransaction(
                                 updatedPoints
                         )
+                        .purchaseAmount(
+                                request.getPurchaseAmount()
+                        )
                         .description(
-                                "Purchase reward"
+                                "Purchase cashback"
                         )
                         .transactionDate(
                                 LocalDateTime.now()
                         )
+                        .createdDate(
+                                LocalDateTime.now()
+                        )
                         .build();
+
+
         loyaltyTransactionRepository.save(transaction);
-        // 8. Response
+
+
+
+        // 6. Response
+
         return LoyaltyEarnResponse.builder()
                 .customerName(
                         customer.getCustomerName()
@@ -178,8 +285,8 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                 .earnedPoints(
                         earnedPoints
                 )
-                .rewardValue(
-                        rewardValue
+                .redeemableAmount(
+                        customer.getRedeemableAmount()
                 )
                 .totalPoints(
                         updatedPoints

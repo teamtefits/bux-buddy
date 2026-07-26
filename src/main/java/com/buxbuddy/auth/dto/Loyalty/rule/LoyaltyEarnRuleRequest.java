@@ -1,6 +1,5 @@
 package com.buxbuddy.auth.dto.Loyalty.rule;
 
-
 import com.buxbuddy.auth.enums.LoyaltyRuleType;
 import lombok.*;
 
@@ -17,10 +16,26 @@ public class LoyaltyEarnRuleRequest {
 
     private String name;
     private LoyaltyRuleType ruleType;
-    private BigDecimal multiplier;
+    /*
+       Cashback percentage
+       Example:
+       2 = 2%
+    */
+    private BigDecimal cashbackPercentage;
+    /*
+       Extra bonus
+       Example:
+       Birthday extra 5%
+    */
     private BigDecimal bonusPercentage;
     private DayOfWeek dayOfWeek;
     private Integer birthdayMonth;
+
+    /*
+       Minimum purchase required
+       Example:
+       Spend $50 minimum
+    */
     private BigDecimal minimumPurchaseAmount;
     private Integer maxPoints;
     private LocalDateTime startDate;

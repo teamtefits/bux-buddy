@@ -11,11 +11,12 @@ import java.util.Optional;
 public interface LoyaltyEarnRuleRepository extends JpaRepository<LoyaltyEarnRule, Long> {
 
     List<LoyaltyEarnRule> findByBusinessAndActiveTrue(Business business);
-
     List<LoyaltyEarnRule> findByBusiness(Business business);
     List<LoyaltyEarnRule> findByBusinessIdAndActiveTrue(Long businessId);
     List<LoyaltyEarnRule> findByBusiness_IdAndActiveTrue(Long businessId);
-    Optional<LoyaltyEarnRule> findByBusiness_IdAndRuleTypeAndActiveTrue(Long businessId, LoyaltyRuleType ruleType
-    );
+    Optional<LoyaltyEarnRule> findByBusiness_IdAndRuleTypeAndActiveTrue(Long businessId, LoyaltyRuleType ruleType);
+    List<LoyaltyEarnRule> findByBusinessIdOrderByRuleType(Long businessId);
+    Optional<LoyaltyEarnRule> findByIdAndBusinessId(Long id, Long businessId);
+    boolean existsByBusinessIdAndRuleType(Long businessId, LoyaltyRuleType ruleType);
 }
 
