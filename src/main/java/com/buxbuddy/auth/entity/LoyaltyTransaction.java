@@ -45,6 +45,7 @@ public class LoyaltyTransaction {
 
     private LocalDateTime transactionDate;
 
+    private BigDecimal earnedCashbackAmount;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id")
     private Business business;
