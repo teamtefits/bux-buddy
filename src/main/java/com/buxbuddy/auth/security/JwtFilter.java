@@ -31,8 +31,9 @@ public class JwtFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         // Public APIs - No JWT required
         if (path.equals("/api/auth/register") ||
-                path.equals("/api/auth/login")) {
-
+                path.equals("/api/auth/login") ||
+                path.equals("/api/customers/public/customer-registration")
+        ) {
             filterChain.doFilter(request, response);
             return;
         }

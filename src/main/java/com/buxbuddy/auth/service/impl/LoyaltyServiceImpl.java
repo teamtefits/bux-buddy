@@ -6,6 +6,7 @@ import com.buxbuddy.auth.dto.Loyalty.earn.LoyaltyEarnResponse;
 import com.buxbuddy.auth.dto.Loyalty.earn.LoyaltyRedeemRuleRequest;
 import com.buxbuddy.auth.dto.Loyalty.earn.LoyaltyRedeemRuleResponse;
 import com.buxbuddy.auth.entity.*;
+import com.buxbuddy.auth.enums.CustomerTier;
 import com.buxbuddy.auth.enums.LoyaltyRuleType;
 import com.buxbuddy.auth.enums.LoyaltyTransactionType;
 import com.buxbuddy.auth.repository.*;
@@ -34,25 +35,111 @@ public class LoyaltyServiceImpl implements LoyaltyService {
     private final BusinessRepository businessRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public CustomerLoyaltyResponse getCustomerByPhone(String phone) {
 
-        Customer customer =
-                customerRepository.findByPhone(phone)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Customer not found"
-                                ));
+        Customer customer = customerRepository.findByPhone(phone)
+                .orElseThrow(() ->
+                        new RuntimeException("Customer not found"));
 
+        // Total Transactions
+        int totalTransactions = customer.getTransactions() != null
+                ? customer.getTransactions().size()
+                : 0;
+
+        // Average Order Value
+        double averageOrderValue = 0.0;
+        if (customer.getVisitCount() != null
+                && customer.getVisitCount() > 0
+                && customer.getLifetimeSpend() != null) {
+
+            averageOrderValue =
+                    customer.getLifetimeSpend() / customer.getVisitCount();
+        }
+
+        // Customer Type
+        String customerType;
+
+        if (customer.getTier() != null
+                && customer.getTier() != CustomerTier.NORMAL) {
+
+            customerType = "VIP";
+
+        } else if (customer.getVisitCount() != null
+                && customer.getVisitCount() >= 20) {
+
+            customerType = "Frequent";
+
+        } else if (customer.getVisitCount() != null
+                && customer.getVisitCount() <= 2) {
+
+            customerType = "New";
+
+        } else if (customer.getLastVisit() != null) {
+
+            long daysSinceLastVisit =
+                    java.time.temporal.ChronoUnit.DAYS.between(
+                            customer.getLastVisit().toLocalDate(),
+                            java.time.LocalDate.now());
+
+            if (daysSinceLastVisit >= 90) {
+                customerType = "Inactive";
+            } else if (daysSinceLastVisit >= 30) {
+                customerType = "At Risk";
+            } else {
+                customerType = "Regular";
+            }
+
+        } else {
+            customerType = "New";
+        }
 
         return CustomerLoyaltyResponse.builder()
                 .customerId(customer.getId())
                 .customerName(customer.getCustomerName())
                 .phone(customer.getPhone())
+
+                // Loyalty
                 .loyaltyPoints(customer.getLoyaltyPoints())
+                .redeemableAmount(customer.getRedeemableAmount())
                 .tier(customer.getTier())
+
+                // Spending
+                .monthlySpend(customer.getMonthlySpend())
+                .lifetimeSpend(customer.getLifetimeSpend())
+
+                // Visits
+                .visitCount(customer.getVisitCount())
+                .firstVisit(customer.getFirstVisit())
+                .lastVisit(customer.getLastVisit())
+
+                // Classification
+                .customerType(customerType)
+
+                // Address
+                .city(customer.getCity())
+                .province(customer.getProvince())
+                .postalCode(customer.getPostalCode())
+                .country(customer.getCountry())
+
+                // Birthday
+                .birthdayMonth(customer.getBirthdayMonth())
+
+                // Statistics
+                .totalTransactions(totalTransactions)
+                .averageOrderValue(averageOrderValue)
+
+                // Business
                 .businessId(
-                        customer.getBusiness().getId()
+                        customer.getBusiness() != null
+                                ? customer.getBusiness().getId()
+                                : null
                 )
+
+                // Audit
+                .createdAt(customer.getCreatedAt())
+                .updatedAt(customer.getUpdatedAt())
+
                 .build();
     }
 

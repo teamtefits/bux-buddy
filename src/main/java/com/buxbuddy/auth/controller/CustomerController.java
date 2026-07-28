@@ -91,4 +91,17 @@ public class CustomerController {
         );
     }
 
+
+    @PostMapping("/public/customer-registration")
+    public ResponseEntity<ApiSuccessResponse<CustomerResponse>> createWithAuth(
+            @RequestBody CustomerRequest request,
+            HttpServletRequest httpRequest) {
+        return ApiResponseUtil.success(
+                HttpStatus.CREATED,
+                messageUtil.getMessage("customer.created"),
+                customerService.saveCustomer(request),
+                httpRequest
+        );
+    }
+
 }
