@@ -11,4 +11,5 @@ public interface CustomerRepository
         boolean existsByPhone(String customerPhone);
         Optional<Customer> findByPhone(String phone);
         List<Customer> findByBusinessId(Long businessId);
+
 }

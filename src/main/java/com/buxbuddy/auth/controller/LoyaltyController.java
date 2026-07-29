@@ -3,7 +3,11 @@ package com.buxbuddy.auth.controller;
 import com.buxbuddy.auth.dto.Loyalty.customer.CustomerLoyaltyResponse;
 import com.buxbuddy.auth.dto.Loyalty.earn.LoyaltyEarnRequest;
 import com.buxbuddy.auth.dto.Loyalty.earn.LoyaltyEarnResponse;
+import com.buxbuddy.auth.dto.Loyalty.redeem.LoyaltyRedeemRequest;
+import com.buxbuddy.auth.dto.Loyalty.redeem.LoyaltyRedeemResponse;
+import com.buxbuddy.auth.service.LoyaltyRedeemService;
 import com.buxbuddy.auth.service.LoyaltyService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +19,7 @@ public class LoyaltyController {
 
 
     private final LoyaltyService loyaltyService;
+    private final LoyaltyRedeemService loyaltyRedeemService;
     @GetMapping("/customer/{phone}")
     public ResponseEntity<CustomerLoyaltyResponse> getCustomerByPhone(
             @PathVariable String phone) {
@@ -29,6 +34,13 @@ public class LoyaltyController {
         return ResponseEntity.ok(
                 loyaltyService.earnPoints(request)
         );
+    }
+
+    @PostMapping("/redeem")
+    public ResponseEntity<LoyaltyRedeemResponse> redeemPoints(
+            @RequestBody @Valid LoyaltyRedeemRequest request) {
+        return ResponseEntity.ok(
+                loyaltyRedeemService.redeemPoints(request));
     }
 
 }
