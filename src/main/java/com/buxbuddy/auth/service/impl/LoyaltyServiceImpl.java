@@ -23,21 +23,14 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class LoyaltyServiceImpl implements LoyaltyService {
 
-
     private final CustomerRepository customerRepository;
-
     private final LoyaltyEarnRuleRepository loyaltyEarnRuleRepository;
-
     private final LoyaltyTransactionRepository loyaltyTransactionRepository;
-
     private final LoyaltyRedeemRuleRepository loyaltyRedeemRuleRepository;
-
     private final BusinessRepository businessRepository;
-
     @Override
     @Transactional(readOnly = true)
     public CustomerLoyaltyResponse getCustomerByPhone(String phone) {
-
         Customer customer = customerRepository.findByPhone(phone)
                 .orElseThrow(() ->
                         new RuntimeException("Customer not found"));

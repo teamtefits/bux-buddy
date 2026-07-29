@@ -123,7 +123,6 @@ public class LoyaltyEarnRuleServiceImpl implements LoyaltyEarnRuleService {
                 .id(rule.getId())
                 .name(rule.getName())
                 .ruleType(rule.getRuleType())
-                .multiplier(rule.getCashbackPercentage())
                 .bonusPercentage(rule.getBonusPercentage())
                 .minimumPurchaseAmount(
                         rule.getMinimumPurchaseAmount()

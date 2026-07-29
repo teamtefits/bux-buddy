@@ -15,7 +15,6 @@ public class LoyaltyEarnRuleResponse {
     private Long id;
     private String name;
     private LoyaltyRuleType ruleType;
-    private BigDecimal multiplier;
     private BigDecimal bonusPercentage;
     private DayOfWeek dayOfWeek;
     private Integer birthdayMonth;
