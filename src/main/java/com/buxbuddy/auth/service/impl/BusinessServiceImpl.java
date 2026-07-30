@@ -88,7 +88,8 @@ public class BusinessServiceImpl implements BusinessService {
     }
     @Override
     public List<BusinessResponse> getAllBusinesses() {
-        return businessRepository.findAll()
+
+        return businessRepository.findAllWithDetails()
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
@@ -158,23 +159,30 @@ public class BusinessServiceImpl implements BusinessService {
     }
 
     private BusinessResponse mapToResponse(Business business) {
+
         Province province = business.getProvince();
+
         return BusinessResponse.builder()
                 .id(business.getId())
                 .name(business.getBusinessName())
+
                 .businessType(
                         business.getBusinessCategory() != null
                                 ? business.getBusinessCategory().getName()
                                 : null
                 )
+
                 // Contact
                 .email(business.getBusinessEmail())
                 .phone(business.getBusinessPhone())
+
                 // Address
                 .addressLine1(business.getAddressLine1())
                 .addressLine2(business.getAddressLine2())
                 .city(business.getCity())
                 .postalCode(business.getPostalCode())
+
+                // Province + Country
                 .province(
                         province != null
                                 ? ProvinceResponse.builder()
@@ -182,26 +190,35 @@ public class BusinessServiceImpl implements BusinessService {
                                 .provinceName(province.getProvinceName())
                                 .provinceCode(province.getProvinceCode())
                                 .country(
-                                        CountryResponse.builder()
+                                        province.getCountry() != null
+                                        ? CountryResponse.builder()
                                                 .id(province.getCountry().getId())
                                                 .countryName(
-                                                        province.getCountry().getCountryName()
+                                                        province.getCountry()
+                                                                .getCountryName()
                                                 )
                                                 .countryCode(
-                                                        province.getCountry().getCountryCode()
+                                                        province.getCountry()
+                                                                .getCountryCode()
                                                 )
                                                 .build()
+                                        : null
                                 )
                                 .build()
                                 : null
                 )
+
                 // Tax
                 .taxNumber(business.getTaxNumber())
                 .taxEnabled(business.getTaxEnabled())
+
                 // Status
                 .status(business.getStatus())
+
+                // Audit
                 .createdAt(business.getCreatedAt())
                 .updatedAt(business.getUpdatedAt())
+
                 .build();
     }
 }

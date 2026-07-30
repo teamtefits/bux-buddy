@@ -50,7 +50,7 @@ public class AdminController {
         adminService.deleteUser(id);
         return ResponseEntity.ok("User deleted successfully");
     }
-    @GetMapping
+    @GetMapping("/business")
     public ResponseEntity<List<BusinessResponse>> getAll() {
         return ResponseEntity.ok(businessService.getAllBusinesses());
     }
