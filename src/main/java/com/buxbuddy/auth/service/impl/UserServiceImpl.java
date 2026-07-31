@@ -89,29 +89,43 @@ public class UserServiceImpl implements UserService {
     @Override
     public RegisterResponse login(RegisterRequest request) {
         try {
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            // Get logged-in user details
-            User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
-            // Generate token with roles + businessId
+
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
             String token = jwtService.generateToken(user);
+
             return RegisterResponse.builder()
-                    .userId((user.getId()))
+                    .userId(user.getId())
                     .email(user.getEmail())
+                    .businessId(
+                            user.getBusiness() != null
+                                    ? user.getBusiness().getId()
+                                    : null
+                    )
                     .token(token)
                     .message("Login successful")
-                    .role(
-                            user.getRoles()
-                                    .stream()
-                                    .map(role -> role.getName().name())
-                                    .toList()
-                    )
+                    .role(user.getRoles()
+                            .stream()
+                            .map(role -> role.getName().name())
+                            .toList())
                     .build();
+
         } catch (BadCredentialsException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid email or password"
+            );
         }
     }
-
     // 🔹 GET ALL USERS
     @Override
     public List<UserResponse> getAllUsers() {
