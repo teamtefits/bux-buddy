@@ -1,6 +1,6 @@
 package com.buxbuddy.auth.enums;
 
-public enum BalanceStatus {
+public enum ReconciliationStatus {
     BALANCED,
     SHORT,
     OVER

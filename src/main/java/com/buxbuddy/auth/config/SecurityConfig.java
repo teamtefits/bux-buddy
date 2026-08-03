@@ -1,6 +1,5 @@
 package com.buxbuddy.auth.config;
 
-
 import com.buxbuddy.auth.security.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +14,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.*;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
@@ -28,56 +29,133 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http) throws Exception {
 
         http
+                // Disable CSRF because we are using JWT
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
+                // Enable CORS
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
                 )
+
+                // JWT is stateless
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+
+                // Disable default login page
                 .formLogin(form -> form.disable())
+
+                // Disable HTTP Basic authentication
                 .httpBasic(basic -> basic.disable())
 
-                // 🔴 IMPORTANT: THIS FIXES YOUR 403 ISSUE
-                .exceptionHandling(ex ->
-                        ex.authenticationEntryPoint(customAuthenticationEntryPoint)
+                // Custom authentication error response
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(
+                                customAuthenticationEntryPoint
+                        )
                 )
 
+                // Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // CORS preflight
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
+
+                        // Authentication APIs
+                        .requestMatchers(
+                                "/api/auth/**"
+                        ).permitAll()
+
+                        // Public customer registration
+                        .requestMatchers(
+                                "/api/customers/public/customer-registration"
+                        ).permitAll()
+
+                        // IMPORTANT:
+                        // Allow Spring Boot error endpoint
+                        .requestMatchers(
+                                "/error"
+                        ).permitAll()
+
+                        // Everything else requires JWT
                         .anyRequest().authenticated()
                 )
 
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                // JWT filter must run before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(
+                        jwtFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
+
+    // ============================================================
+    // Password Encoder
+    // ============================================================
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // ============================================================
+    // Authentication Manager
+    // ============================================================
+
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-            throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+
         return config.getAuthenticationManager();
     }
+
+    // ============================================================
+    // CORS Configuration
+    // ============================================================
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedOrigins(
+                List.of("http://localhost:5173")
+        );
+
+        config.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS"
+                )
+        );
+
+        config.setAllowedHeaders(
+                List.of("*")
+        );
+
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                config
+        );
 
         return source;
     }

@@ -3,9 +3,12 @@ package com.buxbuddy.auth.security;
 import com.buxbuddy.auth.config.CustomUserDetailsService;
 import com.buxbuddy.auth.dto.api.ApiErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,8 +16,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
@@ -22,76 +28,107 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
     private final ObjectMapper objectMapper;
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+
         String path = request.getServletPath();
+
         // Public APIs - No JWT required
-        if (path.equals("/api/auth/register") ||
-                path.equals("/api/auth/login") ||
-                path.equals("/api/customers/public/customer-registration")
-        ) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-        String authHeader = request.getHeader("Authorization");
-        // No JWT token present - continue request
-        if (authHeader == null ||
-                !authHeader.startsWith("Bearer ")) {
+        if (path.equals("/api/auth/register")
+                || path.equals("/api/auth/login")
+                || path.equals("/api/customers/public/customer-registration")
+                || path.equals("/error")) {
 
             filterChain.doFilter(request, response);
             return;
         }
+
+        String authHeader = request.getHeader("Authorization");
+
+        // No JWT token - continue request
+        // Spring Security will handle authentication if required
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+            log.debug(
+                    "No JWT token found. method={}, uri={}",
+                    request.getMethod(),
+                    request.getRequestURI()
+            );
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = authHeader.substring(7);
+
         try {
-            // Validate JWT token
+
+            // Validate JWT
             if (!jwtService.validateToken(token)) {
+
+                log.warn(
+                        "Invalid or expired JWT. method={}, uri={}",
+                        request.getMethod(),
+                        request.getRequestURI()
+                );
+
                 sendErrorResponse(
                         response,
                         request,
                         "JWT token is invalid or expired"
                 );
+
                 return;
             }
-            String username = jwtService.extractUsername(token);
-            if (username != null &&
-                    SecurityContextHolder
-                            .getContext()
-                            .getAuthentication() == null) {
 
+            String username = jwtService.extractUsername(token);
+
+            if (username != null
+                    && SecurityContextHolder
+                    .getContext()
+                    .getAuthentication() == null) {
 
                 UserDetails userDetails =
-                        userDetailsService
-                                .loadUserByUsername(username);
+                        userDetailsService.loadUserByUsername(username);
 
+                log.debug(
+                        "JWT authenticated user={}, authorities={}",
+                        userDetails.getUsername(),
+                        userDetails.getAuthorities()
+                );
 
-                System.out.println(
-                        "USER EMAIL : "
-                                + userDetails.getUsername()
-                );
-                System.out.println(
-                        "AUTHORITIES : "
-                                + userDetails.getAuthorities()
-                );
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
+
                 authenticationToken.setDetails(
                         new WebAuthenticationDetailsSource()
                                 .buildDetails(request)
                 );
+
                 SecurityContextHolder
                         .getContext()
                         .setAuthentication(authenticationToken);
-
             }
+
         } catch (Exception e) {
+
+            log.error(
+                    "JWT authentication failed. method={}, uri={}, message={}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    e.getMessage(),
+                    e
+            );
+
             sendErrorResponse(
                     response,
                     request,
@@ -100,12 +137,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
             return;
         }
-        System.out.println(
-                "GOING TO CONTROLLER : "
-                        + request.getRequestURI()
-        );
-        filterChain.doFilter(request, response);
 
+        log.debug(
+                "Going to controller. method={}, uri={}",
+                request.getMethod(),
+                request.getRequestURI()
+        );
+
+        filterChain.doFilter(request, response);
     }
 
     private void sendErrorResponse(
@@ -122,15 +161,17 @@ public class JwtFilter extends OncePerRequestFilter {
                         .path(request.getRequestURI())
                         .timestamp(LocalDateTime.now())
                         .build();
+
         response.setStatus(
                 HttpServletResponse.SC_UNAUTHORIZED
         );
+
         response.setContentType(
                 "application/json"
         );
-        response.getWriter()
-                .write(
-                        objectMapper.writeValueAsString(errorResponse)
-                );
+
+        response.getWriter().write(
+                objectMapper.writeValueAsString(errorResponse)
+        );
     }
 }

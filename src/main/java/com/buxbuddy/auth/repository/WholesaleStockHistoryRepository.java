@@ -1,11 +1,14 @@
 package com.buxbuddy.auth.repository;
 
-import com.buxbuddy.auth.entity.WholesaleStock;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+
+import com.buxbuddy.auth.entity.WholesaleStockHistory;
+
+import java.time.LocalDate;
 
 import com.buxbuddy.auth.entity.WholesaleStockHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +43,6 @@ public interface WholesaleStockHistoryRepository
             Long wholesaleProductId,
             LocalDate stockDate
     );
+
+    boolean existsByBusinessIdAndWholesaleProductId(Long businessId, @NotNull(message = "Wholesale product ID is required") Long wholesaleProductId);
 }
